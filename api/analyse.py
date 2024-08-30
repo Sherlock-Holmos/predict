@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import cv2
 import numpy as np
-from image_processing import process_image
+from test import process_image
 
 app = Flask(__name__)
 

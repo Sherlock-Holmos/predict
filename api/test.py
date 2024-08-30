@@ -99,7 +99,7 @@ def process_image(image):
                     rect_length = max(rect[1])
                     
                     # 计算最小外接矩形的长宽比
-                    aspect_ratio = float(rect_length) / rect_width
+                    aspect_ratio = rect_length / rect_width
 
                     # 绘制最小外接矩形
                     cv2.drawContours(contour_image, [box], 0, (0, 0, 255), 2)
@@ -133,21 +133,3 @@ def process_image(image):
                     return {"error": "No contours found"}, 400
     else:
         return {"error": "No fish detected"}, 400
-    
-def process_fish(image_path):
-    # 读取图像
-    image = cv2.imread(image_path)
-    if image is None:
-        print(f"无法读取图像: {image_path}")
-        return
-    
-    # 调用处理图像的函数，假设 process_image 返回一个字典
-    result = process_image(image)
-
-    # 使用字典访问长度
-    print(f'长度：{result["length"]}')
-    print(f'宽度：{result["width"]}')
-    print(f'质量：{result["mass"]}')
-    print(f'长宽比：{result["aspect_ratio"]}')
-
-process_fish('fish_image.jpg')
