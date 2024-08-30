@@ -75,4 +75,4 @@ def process_image(input_image_path, output_dir='out'):
     cv2.imwrite(os.path.join(output_dir, 'edge_image.png'), edges)
 
 # 示例用法
-process_image('morph.png')
+process_image('out/morph_0.png')
