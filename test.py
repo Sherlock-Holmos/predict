@@ -6,6 +6,7 @@ from ultralytics import YOLO
 # 加载YOLO模型
 model = YOLO('yolov8s.pt')
 
+# 质量预测算法
 def weight(length, width):
     x = length
     z = width
@@ -16,6 +17,7 @@ def weight(length, width):
     weight = (y + w) / 2
     return weight
 
+# 图像初处理
 def process(image):
     # 转为灰度图
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -39,10 +41,8 @@ def process(image):
 
     return morph
 
+# 图像处理
 def process_image(image):
-    """
-    处理上传的图像，检测鱼体并返回图像和几何特征。
-    """
     # 使用YOLO模型检测鱼体
     results = model(image)
     detections = results[0].boxes.xyxy
@@ -133,7 +133,8 @@ def process_image(image):
                     return {"error": "No contours found"}, 400
     else:
         return {"error": "No fish detected"}, 400
-    
+
+# 主函数
 def process_fish(image_path):
     # 读取图像
     image = cv2.imread(image_path)
@@ -144,10 +145,11 @@ def process_fish(image_path):
     # 调用处理图像的函数，假设 process_image 返回一个字典
     result = process_image(image)
 
-    # 使用字典访问长度
+    # 使用字典访问
     print(f'长度：{result["length"]}')
     print(f'宽度：{result["width"]}')
     print(f'质量：{result["mass"]}')
     print(f'长宽比：{result["aspect_ratio"]}')
 
+# 调用
 process_fish('fish_image.jpg')
