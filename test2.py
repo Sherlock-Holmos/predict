@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import base64
 from ultralytics import YOLO
+import open3d as o3d
 
 # 加载YOLO模型
 model = YOLO('yolov8s.pt')
@@ -48,23 +49,58 @@ def StereoSGBM(left_img, right_img):
 
     return depth_map
 
-# 三维重建与体积计算
-def calculate_volume(depth_map, detections):
-    volume = 0
-    for det in detections:
-        x1, y1, x2, y2 = map(int, det[:4])
-        fish_depth = depth_map[y1:y2, x1:x2]
-        # 计算每个像素对应的三维坐标
-        points = np.dstack(np.meshgrid(np.arange(fish_depth.shape[1]), np.arange(fish_depth.shape[0])))[..., ::-1]
-        # 将深度信息加入坐标中
-        points = np.concatenate((points, fish_depth[..., None]), axis=-1)
-        # 使用体积计算（例如体素法或点云体积估计）
-        # 简化为体素体积计算
-        volume += np.sum(fish_depth > 0) * (体素大小)  # 计算体积
+# 体积-质量回归模型
+def volume_to_mass(volume):
+    density = 1.1  # 假设鱼体密度为1.1 g/cm³
+    mass = volume * density
+    return mass
+
+# 深度图和相机参数
+def generate_point_cloud(depth_map, focal_length, baseline):
+    """
+    生成点云数据
+    :param depth_map: 深度图像
+    :param focal_length: 摄像头的焦距
+    :param baseline: 双目相机基线距离
+    :return: 生成的点云
+    """
+    h, w = depth_map.shape
+    # 生成像素坐标网格
+    x, y = np.meshgrid(np.arange(w), np.arange(h))
+    
+    # 计算真实世界中的坐标
+    z = depth_map / 1000.0  # 假设深度图单位为毫米，将其转换为米
+    x = (x - w / 2) * z / focal_length
+    y = (y - h / 2) * z / focal_length
+    
+    # 将x, y, z合并为点云
+    points = np.dstack((x, y, z)).reshape(-1, 3)
+    
+    # 移除无效点（z <= 0 的点）
+    valid_points = points[points[:, 2] > 0]
+
+    # 创建 Open3D 点云对象
+    point_cloud = o3d.geometry.PointCloud()
+    point_cloud.points = o3d.utility.Vector3dVector(valid_points)
+    return point_cloud
+
+# 点云的三维重建与体积计算
+def estimate_volume_from_point_cloud(point_cloud):
+    """
+    使用凸包算法估算点云的体积
+    :param point_cloud: 点云数据
+    :return: 估算的体积
+    """
+    # 使用 Alpha Shape 进行表面重建，alpha 值决定了表面细节的捕捉程度
+    alpha = 0.05
+    mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(point_cloud, alpha)
+    
+    # 计算三角网格的体积
+    volume = mesh.get_volume()
     return volume
 
 # 主函数
-def estimate_fish_mass(left_image_path, right_image_path):
+def process_fish_volume_estimation(left_image_path,right_image_path, focal_length, baseline):
     # 读取双目图像
     left_image = cv2.imread(left_image_path)
     right_image = cv2.imread(right_image_path)
@@ -72,20 +108,16 @@ def estimate_fish_mass(left_image_path, right_image_path):
     # 计算深度图
     depth_map = StereoSGBM(left_image, right_image)
 
-    # 检测鱼体
-    detections = detect_fish(left_image)
-
-    if len(detections) == 0:
-        print("未检测到鱼体")
+    if depth_map is None:
+        print(f"无法读取深度图像")
         return
-
-    # 计算鱼体积
-    volume = calculate_volume(depth_map, detections)
-
-    # 估算鱼质量
-    mass = volume_to_mass(volume)
-
-    print(f"估算的鱼质量为: {mass:.2f} 克")
+    
+    # 生成点云
+    point_cloud = generate_point_cloud(depth_map, focal_length, baseline)
+    
+    # 估算体积
+    volume = estimate_volume_from_point_cloud(point_cloud)
+    print(f"估算的体积为: {volume:.2f} 立方米")
 
 # 示例调用
-estimate_fish_mass('left_fish_image.jpg', 'right_fish_image.jpg')
+process_fish_volume_estimation('1_left.jpg','1_right.jpg', focal_length=1000, baseline=0.1)
