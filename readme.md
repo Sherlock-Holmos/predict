@@ -16,36 +16,33 @@
 1. 克隆项目仓库：
 
    ```bash
-   git clone <your-repository-url>
+   git clone https://github.com/Sherlock-Holmos/predict.git
    
 2. 进入项目目录：
 
     ```bash
     cd <your-project-directory>
     
-3. 创建虚拟环境（可选，但推荐）：
+3. 创建虚拟环境（可选，推荐使用conda创建）：
 
     ```bash
-    python -m venv venv
-    source venv/bin/activate  # 在 Windows 上使用 `venv\Scripts\activate`
+    conda create predict python==x.x.x ## 自己修改
+    conda activate predict
 
 4. 安装依赖：
 
     ```bash
-    复制代码
-    pip install -r requirements.txt``
+    pip install -r requirements.txt
 
 ## 使用
 1. 启动 Flask 应用：
 
     ```bash
-    复制代码
     python app.py
 
 2. 发送 POST 请求到 /process_fish 端点，上传图像文件。你可以使用工具如 curl 或 Postman 来测试 API。例如，使用 curl：
 
     ```bash
-    复制代码
     curl -X POST http://localhost:5000/process_fish -F "image=@/path/to/your/image.png"
 
 ## 注意事项
