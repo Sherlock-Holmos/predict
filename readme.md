@@ -38,7 +38,7 @@
 1. 启动 Flask 应用：
 
     ```bash
-    python app.py
+    python API/analysis.py
 
 2. 发送 POST 请求到 /process_fish 端点，上传图像文件。你可以使用工具如 curl 或 Postman 来测试 API。例如，使用 curl：
 

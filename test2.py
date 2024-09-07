@@ -2,7 +2,7 @@
 import cv2
 from tools.preprocess import preprocess_image, correct, split_image
 from tools.regression import volume_to_mass
-from tools.stereo_match import StereoSGBM
+from tools.stereo_match import StereoSGBM, preprocess_image_SGBM, postprocess_disparity, stereo_correct
 from tools.point_cloud import generate_point_cloud, estimate_volume_from_point_cloud
 from tools.model_load import load_model, detect_fish
 
@@ -11,15 +11,17 @@ def map(left_image_path,right_image_path):
     left_image = preprocess_image(left_image_path)
     right_image = preprocess_image(right_image_path)
 
+    left_image, right_image = stereo_correct(left_image, right_image)
+
     disparity, depth_map = StereoSGBM(left_image, right_image)
-    
+
     disparity_out_path = 'out/视差图.png'
     depth_map_out_path = 'out/深度图像.png'
     cv2.imwrite(disparity_out_path, disparity)
     cv2.imwrite(depth_map_out_path, depth_map)
 
 
-
+# 完整估算体积
 def test(left_image_path,right_image_path, focal_length, baseline):
     left_image = preprocess_image(left_image_path)
     right_image = preprocess_image(right_image_path)
@@ -46,4 +48,4 @@ def test(left_image_path,right_image_path, focal_length, baseline):
         print("未检测到鱼类。")
 
 # test('1_left.jpg','1_right.jpg', focal_length=2.1, baseline=120)
-map('校正图像/13_imagesLeft/1_left_corrected.jpg','校正图像/13_imagesRight/1_right_corrected.jpg')
+map('input/1_left_corrected.jpg','input/1_right_corrected.jpg')
